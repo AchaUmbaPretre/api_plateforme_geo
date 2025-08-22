@@ -1,23 +1,21 @@
-const pool = require('../config/db');
+import db from "../config/db";
 
-const getPayment = async() => {
-    const [rows] = await pool.query('SELECT * FROM payments');
-    return rows
-}
+export const createPayment = async ({ userId, subscriptionId, amount, method }) => {
+  const [result] = await db.query(
+    "INSERT INTO payments (id_utilisateur, subscription_id, amount, payment_method, status) VALUES (?, ?, ?, ?, ?)",
+    [userId, subscriptionId, amount, method, "pending"]
+  );
+  return result.insertId;
+};
 
-const getPaymentOne = async(id) => {
-    const [rows] = await pool.query('SELECT * FROM payments WHERE id_payments = ?');
-    [id]
-    return rows
-}
+export const updatePayment = async (paymentId, { transactionId, status, metadata }) => {
+  await db.query(
+    "UPDATE payments SET transaction_id = ?, status = ?, metadata = ? WHERE id_payments = ?",
+    [transactionId, status, JSON.stringify(metadata || {}), paymentId]
+  );
+};
 
-const createPayments = async(data) => {
-    const { id_utilisateur, subscription_id, amount, payment_method, transaction_id, payment_date, status} = data;
-    const [result] = await pool.query(
-        "INSERT INTO payments (id_utilisateur, subscription_id, amount, payment_method, transaction_id, payment_date, status)",
-        [id_utilisateur, subscription_id, amount, payment_method, transaction_id, payment_date, status]
-    );
-    return { id: result.insertId}
-}
-
-module.exports = { getPayment, getPaymentOne, createPayments }
+export const getPaymentById = async (id) => {
+  const [rows] = await db.query("SELECT * FROM payments WHERE id_payments = ?", [id]);
+  return rows[0];
+};

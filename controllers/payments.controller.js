@@ -1,31 +1,51 @@
-const paymentModel = require('./../models/paymentsModel');
+import axios from "axios";
+import { createPayment, updatePayment } from "../models/paymentModel.js";
 
-const listPayment = async(req, res, next) => {
-    try {
-        const payment = await paymentModel.getPayment();
-        res.json(payment)
-    } catch (error) {
-        next(error)
-    }
-}
+export const initiatePayment = async (req, res) => {
+  const { userId, subscriptionId, amount, method } = req.body;
 
-const listPaymentOne = async(req, res, next) => {
-    const { id_payments } = req.query;
-    try {
-        const payment = await paymentModel.getPaymentOne(id_payments);
-        res.json(payment)
-    } catch (error) {
-        next(error)
-    }
-}
+  try {
+    // 1. Créer un enregistrement pending
+    const paymentId = await createPayment({ userId, subscriptionId, amount, method });
 
-const addPayments = async (req, res, next) => {
-    try {
-        const newPayment = await paymentModel.addPayments(req.body);
-        res.status(201).json(newPayment);
-    } catch (error) {
-        next(error);
-    }
-}
+    // 2. Appel API MaxiCash
+    const response = await axios.post("https://api.maxicashapp.com/payments", {
+      amount,
+      currency: "USD",
+      msisdn: "243xxxxxxxxx", // numéro du client à remplacer dynamiquement
+      narrative: "Achat abonnement",
+      partnerCode: process.env.MAXICASH_PARTNER_CODE,
+      secretKey: process.env.MAXICASH_SECRET,
+      externalId: paymentId, // identifiant unique
+    });
 
-module.exports = { listPayment, listPaymentOne, addPayments }
+    // 3. Mise à jour du paiement en DB
+    await updatePayment(paymentId, {
+      transactionId: response.data.transactionId,
+      status: "pending",
+      metadata: response.data
+    });
+
+    res.json({ paymentId, redirectUrl: response.data.redirectUrl });
+  } catch (err) {
+    console.error("Erreur initiation paiement:", err.message);
+    res.status(500).json({ error: "Erreur lors de l'initiation du paiement" });
+  }
+};
+
+export const maxiCashCallback = async (req, res) => {
+  const { externalId, status, transactionId } = req.body;
+
+  try {
+    await updatePayment(externalId, {
+      transactionId,
+      status,
+      metadata: req.body
+    });
+
+    res.sendStatus(200);
+  } catch (err) {
+    console.error("Erreur callback MaxiCash:", err.message);
+    res.status(500).send("Erreur callback");
+  }
+};

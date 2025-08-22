@@ -1,10 +1,12 @@
-const express = require('express');
-const { listPayment, listPaymentOne, addPayments } = require('../controllers/payments.controller');
+import express from "express";
+import { initiatePayment, maxiCashCallback } from "../controllers/paymentController.js";
 
 const router = express.Router();
 
-router.get('/', listPayment);
-router.get('/one', listPaymentOne);
-router.post('/', addPayments)
+//Initier un paiement
+router.post("/initiate", initiatePayment);
 
-module.exports = router;
+//MaxiCash
+router.post("/callback", maxiCashCallback);
+
+export default router;
