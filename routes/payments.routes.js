@@ -1,5 +1,5 @@
-import express from "express";
-import { initiatePayment, maxiCashCallback } from "../controllers/paymentController.js";
+const express = require('express')
+const { initiatePayment, maxiCashCallback } = require('../controllers/payments.controller.js')
 
 const router = express.Router();
 
@@ -9,4 +9,4 @@ router.post("/initiate", initiatePayment);
 //MaxiCash
 router.post("/callback", maxiCashCallback);
 
-export default router;
+module.exports = router;

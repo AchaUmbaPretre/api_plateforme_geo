@@ -1,7 +1,7 @@
-import axios from "axios";
-import { createPayment, updatePayment } from "../models/paymentModel.js";
+const axios = require("axios");
+const { createPayment, updatePayment, extendUserSubscription } = require("../models/paymentsModel");
 
-export const initiatePayment = async (req, res) => {
+const initiatePayment = async (req, res) => {
   const { userId, subscriptionId, amount, method } = req.body;
 
   try {
@@ -12,14 +12,14 @@ export const initiatePayment = async (req, res) => {
     const response = await axios.post("https://api.maxicashapp.com/payments", {
       amount,
       currency: "USD",
-      msisdn: "243xxxxxxxxx", // numéro du client à remplacer dynamiquement
+      msisdn: "243xxxxxxxxx", // ⚡ à remplacer dynamiquement par req.body.phone si dispo
       narrative: "Achat abonnement",
       partnerCode: process.env.MAXICASH_PARTNER_CODE,
       secretKey: process.env.MAXICASH_SECRET,
-      externalId: paymentId, // identifiant unique
+      externalId: paymentId,
     });
 
-    // 3. Mise à jour du paiement en DB
+    // 3. Sauvegarder transaction_id
     await updatePayment(paymentId, {
       transactionId: response.data.transactionId,
       status: "pending",
@@ -33,15 +33,21 @@ export const initiatePayment = async (req, res) => {
   }
 };
 
-export const maxiCashCallback = async (req, res) => {
-  const { externalId, status, transactionId } = req.body;
+const maxiCashCallback = async (req, res) => {
+  const { externalId, status, transactionId, userId, subscriptionId } = req.body;
 
   try {
+    // 1. Mettre à jour le paiement
     await updatePayment(externalId, {
       transactionId,
       status,
       metadata: req.body
     });
+
+    // 2. Si succès → étendre l’abonnement utilisateur
+    if (status === "success") {
+      await extendUserSubscription(userId, subscriptionId);
+    }
 
     res.sendStatus(200);
   } catch (err) {
@@ -49,3 +55,5 @@ export const maxiCashCallback = async (req, res) => {
     res.status(500).send("Erreur callback");
   }
 };
+
+module.exports = { initiatePayment, maxiCashCallback };
