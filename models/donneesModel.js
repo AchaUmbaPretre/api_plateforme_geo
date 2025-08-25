@@ -1,29 +1,59 @@
-const pool = require('../config/db')
+const pool = require('../config/db');
 
-const getDonnees = async() => {
-    const [rows] = await pool.query('SELECT * FROM donnees');
-    return rows
+const getDonnees = async (filters = {}) => {
+  const { typeIds, pays, region, acces, dateCollecte, datePublication } = filters;
+  let query = 'SELECT * FROM donnees WHERE 1=1';
+  const params = [];
+
+  if (typeIds && typeIds.length) {
+    query += ` AND id_type IN (${typeIds.map(() => '?').join(',')})`;
+    params.push(...typeIds);
+  }
+  if (pays) {
+    query += ' AND pays LIKE ?';
+    params.push(`%${pays}%`);
+  }
+  if (region) {
+    query += ' AND region LIKE ?';
+    params.push(`%${region}%`);
+  }
+  if (acces) {
+    query += ' AND acces = ?';
+    params.push(acces);
+  }
+  if (dateCollecte) {
+    query += ' AND date_collecte = ?';
+    params.push(dateCollecte);
+  }
+  if (datePublication) {
+    query += ' AND DATE(date_publication) = ?';
+    params.push(datePublication);
+  }
+
+  const [rows] = await pool.query(query, params);
+  return rows;
 }
 
-const getDonneesOne = async(id) => {
-    const [rows] = await pool.query('SELECT * FROM donnees WHERE id_donnee = ?');
-    [id]
-    return rows
-}
-
-const getDonneesTypeOne = async(id) => {
-    const [rows] = await pool.query('SELECT * FROM donnees WHERE id_type = ?');
-    [id]
-    return rows
+const getDonneesOne = async (id_donnee) => {
+  const [rows] = await pool.query('SELECT * FROM donnees WHERE id_donnee = ?', [id_donnee]);
+  return rows[0] || null;
 }
 
 const createDonnees = async (data) => {
-    const { id_type, titre, description, pays, region, latitude, longitude, fichier_url, vignette_url, meta, date_collecte, acces } = data;
-    const [result] = await pool.query(
-        "INSERT INTO donnees (id_type, titre, description, pays, region, latitude, longitude, fichier_url, vignette_url, meta, date_collecte, acces)",
-        [id_type, titre, description, pays, region, latitude, longitude, fichier_url, vignette_url, meta, date_collecte, acces]
-    );
-    return { id: result.insertId, ...data};
+  const {
+    id_type, titre, description, pays, region,
+    latitude, longitude, fichier_url, vignette_url, meta,
+    date_collecte, acces
+  } = data;
+
+  const [result] = await pool.query(
+    `INSERT INTO donnees 
+    (id_type, titre, description, pays, region, latitude, longitude, fichier_url, vignette_url, meta, date_collecte, acces)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [id_type, titre, description, pays, region, latitude, longitude, fichier_url, vignette_url, meta, date_collecte, acces]
+  );
+
+  return { id_donnee: result.insertId, ...data };
 }
 
-module.exports = { getDonnees, getDonneesOne, getDonneesTypeOne, createDonnees };
+module.exports = { getDonnees, getDonneesOne, createDonnees };

@@ -5,13 +5,19 @@ const donneesRoutes = require('./routes/donnees.routes');
 const paymentRoutes = require('./routes/payments.routes');
 const subscriptionRoutes = require('./routes/subscriptions.routes')
 const userRoutes = require('./routes/user.routes')
+const cors = require("cors");
+
 
 const errorHandler = require("./middlewares/errorHandler");
 
 const app = express();
 
+app.use(cors());
+
 // middlewares globaux
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 
 // routes
 app.use("/api/auth", authRoutes);
