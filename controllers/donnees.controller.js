@@ -30,28 +30,53 @@ const listDonneesOne = async (req, res, next) => {
 }
 
 // POST /donnees (admin) avec upload
-const addDonnees = async (req, res, next) => {
+ const addDonnees = async (req, res) => {
   try {
-    const data = req.body;
-    if (req.file) {
-      const uploadPath = `/uploads/${req.file.filename}`;
-      data.fichier_url = uploadPath;
+    const {
+      id_type,
+      titre,
+      description,
+      pays,
+      region,
+      latitude,
+      longitude,
+      meta,
+      date_collecte,
+      acces,
+    } = req.body;
 
-      // Création d’une vignette automatique si c’est une image
-      const ext = path.extname(req.file.originalname).toLowerCase();
-      if (['.jpg', '.jpeg', '.png'].includes(ext)) {
-        const thumbName = `thumb_${req.file.filename}`;
-        const thumbPath = path.join('public/uploads', thumbName);
-        await sharp(req.file.path).resize(200, 200).toFile(thumbPath);
-        data.vignette_url = `/uploads/${thumbName}`;
-      }
-    }
+    // Récupération des fichiers uploadés par multer
+    const fichier = req.files?.fichier ? req.files.fichier[0].filename : null;
+    const vignette = req.files?.vignette ? req.files.vignette[0].filename : null;
 
-    const newDonnees = await donneesModel.createDonnees(data);
-    res.status(201).json(newDonnees);
+    // Construction des URL publiques
+    const fichier_url = fichier ? `/uploads/${fichier}` : null;
+    const vignette_url = vignette ? `/uploads/${vignette}` : null;
+
+    // Appel du modèle
+    const newDonnee = await donneesModel.createDonnees({
+      id_type,
+      titre,
+      description,
+      pays,
+      region,
+      latitude,
+      longitude,
+      fichier_url,
+      vignette_url,
+      meta,
+      date_collecte,
+      acces,
+    });
+
+    res.status(201).json({
+      message: "Donnée ajoutée avec succès",
+      donnee: newDonnee,
+    });
   } catch (error) {
-    next(error);
+    console.error("Erreur addDonnees:", error);
+    res.status(500).json({ message: "Erreur serveur lors de l'ajout de la donnée" });
   }
-}
+};
 
 module.exports = { listDonnees, listDonneesOne, addDonnees };

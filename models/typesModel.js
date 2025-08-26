@@ -5,6 +5,16 @@ async function getTypes() {
   return rows;
 }
 
+async function getPays() {
+  const [rows] = await pool.query("SELECT * FROM pays");
+  return rows;
+}
+
+async function getProvince() {
+  const [rows] = await pool.query("SELECT * FROM provinces");
+  return rows;
+}
+
 async function createTypes(types) {
   const { nom_type, slug, description } = types;
   const [result] = await pool.query(
@@ -14,4 +24,4 @@ async function createTypes(types) {
   return { id: result.insertId, ...types };
 }
 
-module.exports = { getTypes, createTypes };
+module.exports = { getTypes, getPays, getProvince, createTypes };

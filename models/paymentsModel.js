@@ -1,5 +1,11 @@
 const pool = require("../config/db");
 
+const getPayment = async() => {
+
+  const [rows] = await pool.query("SELECT * FROM payments");
+  return rows;
+}
+
 const createPayment = async ({ userId, subscriptionId, amount, method }) => {
   const [result] = await pool.query(
     "INSERT INTO payments (id_utilisateur, subscription_id, amount, payment_method, status) VALUES (?, ?, ?, ?, ?)",
@@ -43,4 +49,4 @@ const extendUserSubscription = async (userId, subscriptionId) => {
   );
 };
 
-module.exports = { createPayment, updatePayment, getPaymentById, extendUserSubscription };
+module.exports = { getPayment, createPayment, updatePayment, getPaymentById, extendUserSubscription };

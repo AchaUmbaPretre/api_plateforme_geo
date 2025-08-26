@@ -1,7 +1,9 @@
 const express = require('express')
-const { initiatePayment, maxiCashCallback } = require('../controllers/payments.controller.js')
+const { initiatePayment, maxiCashCallback, listPayment } = require('../controllers/payments.controller.js');
 
 const router = express.Router();
+
+router.get('/', listPayment)
 
 //Initier un paiement
 router.post("/initiate", initiatePayment);

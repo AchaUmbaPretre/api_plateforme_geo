@@ -1,7 +1,16 @@
 const axios = require("axios");
-const { createPayment, updatePayment, extendUserSubscription } = require("../models/paymentsModel");
+const { createPayment, updatePayment, extendUserSubscription, getPayment } = require("../models/paymentsModel");
 
 require("dotenv").config(); // Charger les variables .env
+
+const listPayment = async(req, res) => {
+try {
+    const types = await getPayment();
+    res.json(types);
+  } catch (error) {
+    next(error); // 👉 passe au middleware errorHandler
+  }
+}
 
 // INITIATION DU PAIEMENT
 const initiatePayment = async (req, res) => {
@@ -62,4 +71,4 @@ const maxiCashCallback = async (req, res) => {
   }
 };
 
-module.exports = { initiatePayment, maxiCashCallback };
+module.exports = { listPayment, initiatePayment, maxiCashCallback };
