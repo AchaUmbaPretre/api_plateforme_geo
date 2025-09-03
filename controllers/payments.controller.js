@@ -1,70 +1,93 @@
 const axios = require("axios");
 const { createPayment, updatePayment, extendUserSubscription, getPayment } = require("../models/paymentsModel");
+require("dotenv").config();
+const qs = require("qs");
+const express = require("express");
 
-require("dotenv").config(); // Charger les variables .env
-
-const listPayment = async(req, res) => {
-try {
+// ---------------- LISTE DES PAIEMENTS ----------------
+const listPayment = async (req, res, next) => {
+  try {
     const types = await getPayment();
     res.json(types);
   } catch (error) {
-    next(error); // 👉 passe au middleware errorHandler
-  }
-}
-
-// INITIATION DU PAIEMENT
-const initiatePayment = async (req, res) => {
-  const { userId, subscriptionId, amount, phone } = req.body;
-
-  try {
-    // 1️⃣ Créer un enregistrement pending
-    const paymentId = await createPayment({ userId, subscriptionId, amount, method: "maxicash" });
-
-    // 2️⃣ Appel API MaxiCash Sandbox
-    const response = await axios.post("https://sandbox.maxicashapp.com/payments", {
-      amount,
-      currency: "USD",
-      msisdn: phone || process.env.MAXICASH_PHONE,
-      narrative: "Achat abonnement",
-      partnerCode: process.env.MAXICASH_PARTNER_CODE,
-      secretKey: process.env.MAXICASH_SECRET,
-      externalId: paymentId,
-    });
-
-    // 3️⃣ Mettre à jour la transaction
-    await updatePayment(paymentId, {
-      transactionId: response.data.transactionId,
-      status: "pending",
-      metadata: response.data
-    });
-
-    res.json({ paymentId, redirectUrl: response.data.redirectUrl });
-
-  } catch (err) {
-    console.error("Erreur initiation paiement:", err.message);
-    res.status(500).json({ error: "Erreur lors de l'initiation du paiement" });
+    next(error);
   }
 };
 
-// CALLBACK MaxiCash (notification)
-const maxiCashCallback = async (req, res) => {
-  const { externalId, status, transactionId, userId, subscriptionId } = req.body;
+// ---------------- INITIATION DU PAIEMENT ----------------
+const initiatePayment = async (req, res) => {
+  const { userId, subscriptionId, amount, phone, email } = req.body;
+
+  if (!amount || parseFloat(amount) < 5) {
+    return res.status(400).json({ error: "Le montant minimum est 5 USD." });
+  }
 
   try {
-    // 1️⃣ Mettre à jour le paiement
-    await updatePayment(externalId, {
-      transactionId,
-      status,
-      metadata: req.body
+    // Crée le paiement dans la DB
+    const paymentId = await createPayment({
+      userId,
+      subscriptionId,
+      amount,
+      method: "maxicash",
     });
 
-    // 2️⃣ Si succès → étendre l’abonnement utilisateur
-    if (status === "success") {
+    // URL publique Ngrok - à remplacer par ton URL actuel
+    const NGROK_URL = process.env.NGROK_URL || "https://xyz1234.ngrok.io";
+
+    // Prépare le payload pour MaxiCash PayEntry
+    const payload = {
+      PayType: "MaxiCash",
+      Amount: parseFloat(amount).toFixed(2),
+      Currency: "maxiDollar",
+      Telephone: phone,
+      MerchantID: process.env.MAXICASH_PARTNER_CODE,
+      MerchantPassword: process.env.MAXICASH_SECRET,
+      Language: "fr",
+      Reference: paymentId.toString(),
+      Accepturl: `${NGROK_URL}/payment-success`,
+      Cancelurl: `${NGROK_URL}/pay-cancel`,
+      Declineurl: `${NGROK_URL}/pay-failure`,
+      NotifyURL: `${NGROK_URL}/api/payment/callback`,
+      Email: email || "test@test.com",
+    };
+
+    // Renvoie l'URL de redirection et les données pour POST form côté frontend
+    res.json({
+      redirectUrl: "https://api-testbed.maxicashme.com/PayEntryPost",
+      formData: payload,
+    });
+  } catch (err) {
+    console.error("Erreur initiation paiement:", err);
+    res.status(500).json({ error: "Erreur lors de l'initiation du paiement." });
+  }
+};
+
+// ---------------- CALLBACK MaxiCash ----------------
+const maxiCashCallback = async (req, res) => {
+  // Selon MaxiCash, le callback peut envoyer x-www-form-urlencoded
+  // Assure-toi d'avoir dans ton app.js/serveur : app.use(express.urlencoded({ extended: true }));
+
+  const { Reference, Status, TransactionID, TransactionId, transaction_id, userId, subscriptionId } = req.body;
+
+  // Utilise le champ correct renvoyé par MaxiCash
+  const realTransactionId = TransactionID || TransactionId || transaction_id || null;
+
+  console.log("Callback MaxiCash reçu :", req.body);
+
+  try {
+    // Mets à jour le paiement dans la DB
+    await updatePayment(Reference, {
+      transactionId: realTransactionId,
+      status: Status,
+      metadata: req.body,
+    });
+
+    // Si paiement réussi, prolonge l'abonnement
+    if (Status === "success") {
       await extendUserSubscription(userId, subscriptionId);
     }
 
     res.sendStatus(200);
-
   } catch (err) {
     console.error("Erreur callback MaxiCash:", err.message);
     res.status(500).send("Erreur callback");
