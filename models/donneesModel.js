@@ -44,6 +44,15 @@ const getDonneesOne = async (id_donnee) => {
   return rows[0] || null;
 }
 
+const getDonneesTypeOne = async (id_type) => {
+  const [rows] = await pool.query(`SELECT d.id_donnee, d.titre, td.nom_type, p.nom_pays, pr.name_fr, d.description, d.description, d.latitude, d.longitude, d.fichier_url, d.vignette_url, d.date_collecte, d.date_publication, d.acces FROM donnees d 
+                INNER JOIN types_donnees td ON td.id_type = d.id_type
+                INNER JOIN pays p ON p.id_pays = d.pays
+                INNER JOIN provinces pr ON pr.id = d.pays
+                WHERE d.id_type = ?`, [id_type]);
+  return rows || null;
+}
+
 const createDonnees = async (data) => {
   const {
     id_type, titre, description, pays, region,
@@ -61,4 +70,4 @@ const createDonnees = async (data) => {
   return { id_donnee: result.insertId, ...data };
 }
 
-module.exports = { getDonnees, getDonneesOne, createDonnees };
+module.exports = { getDonnees, getDonneesOne, getDonneesTypeOne, createDonnees };

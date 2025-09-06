@@ -29,6 +29,20 @@ const listDonneesOne = async (req, res, next) => {
   }
 }
 
+const listDonneesType = async (req, res, next) => {
+  try {
+    const { id_type } = req.query;
+    if (!id_type) return res.status(400).json({ message: 'id_type requis' });
+
+    const types = await donneesModel.getDonneesTypeOne(id_type);
+    if (!id_type) return res.status(404).json({ message: 'Type non trouvée' });
+
+    res.json(types);
+  } catch (error) {
+    next(error);
+  }
+}
+
 // POST /donnees (admin) avec upload
  const addDonnees = async (req, res) => {
   try {
@@ -79,4 +93,4 @@ const listDonneesOne = async (req, res, next) => {
   }
 };
 
-module.exports = { listDonnees, listDonneesOne, addDonnees };
+module.exports = { listDonnees, listDonneesOne, listDonneesType, addDonnees };

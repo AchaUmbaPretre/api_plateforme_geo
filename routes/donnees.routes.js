@@ -3,7 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const { authenticateToken, authorizeRoles } = require('../middlewares/authMiddleware');
-const { listDonnees, listDonneesOne, addDonnees } = require('../controllers/donnees.controller');
+const { listDonnees, listDonneesOne, addDonnees, listDonneesType } = require('../controllers/donnees.controller');
 
 // Config Multer (stockage local exemple)
 const storage = multer.diskStorage({
@@ -23,6 +23,8 @@ const upload = multer({ storage });
 
 router.get('/', listDonnees);
 router.get('/one', authenticateToken, listDonneesOne);
+router.get('/type_one', authenticateToken, listDonneesType);
+
 router.post(
   "/",
   upload.fields([
