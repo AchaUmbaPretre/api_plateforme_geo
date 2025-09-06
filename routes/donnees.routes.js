@@ -8,13 +8,17 @@ const { listDonnees, listDonneesOne, addDonnees } = require('../controllers/donn
 // Config Multer (stockage local exemple)
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "public/uploads/"); // dossier de stockage
+    // __dirname correspond au dossier actuel du fichier JS
+    cb(null, path.join(__dirname, "..", "public", "uploads")); 
+    // ".." pour remonter un dossier si tu es dans routes/
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, uniqueSuffix + "-" + file.originalname);
+    const safeName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, "_");
+    cb(null, `${uniqueSuffix}-${safeName}`);
   },
-})
+});
+
 const upload = multer({ storage });
 
 router.get('/', listDonnees);

@@ -6,17 +6,28 @@ const paymentRoutes = require('./routes/payments.routes');
 const subscriptionRoutes = require('./routes/subscriptions.routes')
 const userRoutes = require('./routes/user.routes')
 const cors = require("cors");
+const path = require('path');
+
 
 
 const errorHandler = require("./middlewares/errorHandler");
 
 const app = express();
 
-app.use(cors());
+const corsOptions = {
+  origin: '*',
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  preflightContinue: false,
+  optionsSuccessStatus: 204,
+  allowedHeaders: 'Origin, X-Requested-With, Content-Type, Accept'
+};
+
+app.use(cors(corsOptions));
 
 // middlewares globaux
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use("/uploads", express.static(path.join(__dirname, "public", "uploads")));
 
 
 // routes
