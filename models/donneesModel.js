@@ -2,7 +2,12 @@ const pool = require('../config/db');
 
 const getDonnees = async (filters = {}) => {
   const { typeIds, pays, region, acces, dateCollecte, datePublication } = filters;
-  let query = 'SELECT * FROM donnees WHERE 1=1';
+  let query = `SELECT d.id_donnee, d.titre, td.nom_type, p.nom_pays, pr.name_fr, d.description, d.latitude, d.longitude, d.fichier_url, d.vignette_url, d.date_collecte, d.date_publication, d.acces FROM donnees d 
+                INNER JOIN types_donnees td ON td.id_type = d.id_type
+                INNER JOIN pays p ON p.id_pays = d.pays
+                INNER JOIN provinces pr ON pr.id = d.pays
+                WHERE 1=1
+              `;
   const params = [];
 
   if (typeIds && typeIds.length) {

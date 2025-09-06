@@ -2,7 +2,9 @@ const pool = require("../config/db");
 
 const getPayment = async() => {
 
-  const [rows] = await pool.query("SELECT * FROM payments");
+  const [rows] = await pool.query(`SELECT p.id_payments, u.nom, s.name, P.amount, p.payment_method, p.transaction_id, p.payment_date, p.status  FROM payments p
+LEFT JOIN utilisateurs u ON p.id_utilisateur = u.id_utilisateur
+INNER JOIN subscriptions s ON s.id_subscription = p.subscription_id`);
   return rows;
 }
 
