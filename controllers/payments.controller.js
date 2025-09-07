@@ -1,5 +1,5 @@
 const axios = require("axios");
-const { createPayment, updatePayment, extendUserSubscription, getPayment } = require("../models/paymentsModel");
+const { createPayment, updatePayment, extendUserSubscription, getPayment, getPaymentStat, getPaymentCount } = require("../models/paymentsModel");
 require("dotenv").config();
 const qs = require("qs");
 const express = require("express");
@@ -9,6 +9,24 @@ const listPayment = async (req, res, next) => {
   try {
     const types = await getPayment();
     res.json(types);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const countPayment = async (req, res, next) => {
+  try {
+    const count = await getPaymentCount();
+    res.json(count);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const listPaymentStat = async (req, res, next) => {
+  try {
+    const stat = await getPaymentStat();
+    res.json(stat);
   } catch (error) {
     next(error);
   }
@@ -94,4 +112,4 @@ const maxiCashCallback = async (req, res) => {
   }
 };
 
-module.exports = { listPayment, initiatePayment, maxiCashCallback };
+module.exports = { listPayment, countPayment, listPaymentStat, initiatePayment, maxiCashCallback };

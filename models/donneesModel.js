@@ -48,6 +48,11 @@ const getDonneesOne = async (id_donnee) => {
   return rows[0] || null;
 }
 
+const getDonneesCount = async () => {
+  const [rows] = await pool.query( `SELECT COUNT( DISTINCT d.id_donnee) AS count FROM donnees d`);
+  return rows[0] || null;
+}
+
 const getDonneesTypeOne = async (id_type) => {
   const [rows] = await pool.query(`SELECT d.id_donnee, d.titre, td.nom_type, p.nom_pays, pr.name_fr, d.vignette_url, d.date_collecte, d.acces FROM donnees d 
                 INNER JOIN types_donnees td ON td.id_type = d.id_type
@@ -66,12 +71,12 @@ const createDonnees = async (data) => {
 
   const [result] = await pool.query(
     `INSERT INTO donnees 
-    (id_type, titre, description, pays, region, latitude, longitude, fichier_url, vignette_url, meta, date_collecte, acces)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [id_type, titre, description, pays, region, latitude, longitude, fichier_url, vignette_url, meta, date_collecte, acces]
+    (id_type, titre, description, pays, region, latitude, longitude, fichier_url, vignette_url, date_collecte, acces)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [id_type, titre, description, pays, region, latitude, longitude, fichier_url, vignette_url, date_collecte, acces]
   );
 
   return { id_donnee: result.insertId, ...data };
 }
 
-module.exports = { getDonnees, getDonneesOne, getDonneesTypeOne, createDonnees };
+module.exports = { getDonnees, getDonneesOne, getDonneesCount, getDonneesTypeOne, createDonnees };

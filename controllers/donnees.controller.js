@@ -14,6 +14,15 @@ const listDonnees = async (req, res, next) => {
   }
 }
 
+const countDonnees = async (req, res, next) => {
+  try {
+    const stat = await donneesModel.getDonneesCount();
+    res.json(stat);
+  } catch (error) {
+    next(error);
+  }
+}
+
 // GET /donnees/one?id_donnee=...
 const listDonneesOne = async (req, res, next) => {
   try {
@@ -54,7 +63,6 @@ const listDonneesType = async (req, res, next) => {
       region,
       latitude,
       longitude,
-      meta,
       date_collecte,
       acces,
     } = req.body;
@@ -78,7 +86,6 @@ const listDonneesType = async (req, res, next) => {
       longitude,
       fichier_url,
       vignette_url,
-      meta,
       date_collecte,
       acces,
     });
@@ -93,4 +100,4 @@ const listDonneesType = async (req, res, next) => {
   }
 };
 
-module.exports = { listDonnees, listDonneesOne, listDonneesType, addDonnees };
+module.exports = { listDonnees, countDonnees, listDonneesOne, listDonneesType, addDonnees };

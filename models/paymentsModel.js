@@ -8,6 +8,38 @@ INNER JOIN subscriptions s ON s.id_subscription = p.subscription_id`);
   return rows;
 }
 
+const getPaymentCount = async() => {
+
+  const [rows] = await pool.query(`SELECT COUNT(p.id_payments) AS count FROM payments p`);
+  return rows[0];
+}
+
+const getPaymentStat = async () => {
+  const [rows] = await pool.query(`
+   SELECT 
+    CASE MONTH(p.payment_date)
+        WHEN 1 THEN 'Janv'
+        WHEN 2 THEN 'Févr'
+        WHEN 3 THEN 'Mars'
+        WHEN 4 THEN 'Avr'
+        WHEN 5 THEN 'Mai'
+        WHEN 6 THEN 'Juin'
+        WHEN 7 THEN 'Juil'
+        WHEN 8 THEN 'Août'
+        WHEN 9 THEN 'Sept'
+        WHEN 10 THEN 'Oct'
+        WHEN 11 THEN 'Nov'
+        WHEN 12 THEN 'Déc'
+    END AS month,
+    SUM(p.amount) AS amount
+FROM payments p
+GROUP BY MONTH(p.payment_date)
+ORDER BY MONTH(p.payment_date);
+
+  `);
+  return rows;
+};
+
 const createPayment = async ({ userId, subscriptionId, amount, method }) => {
   const [result] = await pool.query(
     "INSERT INTO payments (id_utilisateur, subscription_id, amount, payment_method, status) VALUES (?, ?, ?, ?, ?)",
@@ -51,4 +83,4 @@ const extendUserSubscription = async (userId, subscriptionId) => {
   );
 };
 
-module.exports = { getPayment, createPayment, updatePayment, getPaymentById, extendUserSubscription };
+module.exports = { getPayment, getPaymentCount, getPaymentStat, createPayment, updatePayment, getPaymentById, extendUserSubscription };
