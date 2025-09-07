@@ -40,12 +40,16 @@ const getDonnees = async (filters = {}) => {
 }
 
 const getDonneesOne = async (id_donnee) => {
-  const [rows] = await pool.query('SELECT * FROM donnees WHERE id_donnee = ?', [id_donnee]);
+  const [rows] = await pool.query( `SELECT d.id_donnee, d.titre, td.nom_type, p.nom_pays, pr.name_fr, d.description, d.latitude, d.longitude, d.fichier_url, d.vignette_url, d.date_collecte, d.date_publication, d.acces FROM donnees d 
+                INNER JOIN types_donnees td ON td.id_type = d.id_type
+                INNER JOIN pays p ON p.id_pays = d.pays
+                INNER JOIN provinces pr ON pr.id = d.pays
+                WHERE d.id_donnee = ?`, [id_donnee]);
   return rows[0] || null;
 }
 
 const getDonneesTypeOne = async (id_type) => {
-  const [rows] = await pool.query(`SELECT d.id_donnee, d.titre, td.nom_type, p.nom_pays, pr.name_fr, d.description, d.description, d.latitude, d.longitude, d.fichier_url, d.vignette_url, d.date_collecte, d.date_publication, d.acces FROM donnees d 
+  const [rows] = await pool.query(`SELECT d.id_donnee, d.titre, td.nom_type, p.nom_pays, pr.name_fr, d.vignette_url, d.date_collecte, d.acces FROM donnees d 
                 INNER JOIN types_donnees td ON td.id_type = d.id_type
                 INNER JOIN pays p ON p.id_pays = d.pays
                 INNER JOIN provinces pr ON pr.id = d.pays

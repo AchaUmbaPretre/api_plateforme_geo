@@ -22,8 +22,8 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 router.get('/', listDonnees);
-router.get('/one', authenticateToken, listDonneesOne);
-router.get('/type_one', authenticateToken, listDonneesType);
+router.get('/one', listDonneesOne);
+router.get('/type_one', listDonneesType);
 
 router.post(
   "/",
