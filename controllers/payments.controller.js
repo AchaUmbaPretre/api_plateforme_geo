@@ -84,6 +84,7 @@ const initiatePayment = async (req, res) => {
 const maxiCashCallback = async (req, res) => {
   // Selon MaxiCash, le callback peut envoyer x-www-form-urlencoded
   // Assure-toi d'avoir dans ton app.js/serveur : app.use(express.urlencoded({ extended: true }));
+  console.log("Callback MaxiCash reçu :", req.body);
 
   const { Reference, Status, TransactionID, TransactionId, transaction_id, userId, subscriptionId } = req.body;
 
