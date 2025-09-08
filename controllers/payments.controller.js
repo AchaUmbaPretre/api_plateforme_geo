@@ -32,7 +32,6 @@ const listPaymentStat = async (req, res, next) => {
   }
 };
 
-// ---------------- INITIER PAIEMENT MAXICASH PAYENTRY ----------------
 const initiatePayment = async (req, res) => {
   const { userId, subscriptionId, amount, phone, email } = req.body;
 
@@ -41,7 +40,7 @@ const initiatePayment = async (req, res) => {
   }
 
   try {
-    // 1️⃣ Crée le paiement dans la DB
+    // 1️⃣ Sauvegarde paiement DB
     const paymentId = await createPayment({
       userId,
       subscriptionId,
@@ -49,11 +48,12 @@ const initiatePayment = async (req, res) => {
       method: "maxicash",
     });
 
-    // 2️⃣ Prépare les URLs de redirection
+    // 2️⃣ Prépare URL de redirection
     const BACKEND_URL = process.env.BASE_URL_BACKEND || "http://localhost:5000";
-    const FRONTEND_URL = process.env.DOMAIN_FRONTEND || "http://localhost:3000";
+    const FRONTEND_URL =
+      process.env.DOMAIN_FRONTEND || "http://localhost:3000";
 
-    // 3️⃣ Préparer le payload pour PayEntry
+    // 3️⃣ Payload PayEntry
     const payload = {
       PayType: "MaxiCash",
       Amount: parseFloat(amount).toFixed(2),
@@ -80,21 +80,19 @@ const initiatePayment = async (req, res) => {
   }
 };
 
-// ---------------- CALLBACK MAXICASH ----------------
+// ---------------- CALLBACK ----------------
 const maxiCashCallback = async (req, res) => {
   console.log("Callback MaxiCash reçu :", req.body);
 
-  const { Reference, Status, TransactionID, TransactionId, transaction_id, userId, subscriptionId } = req.body;
-  const realTransactionId = TransactionID || TransactionId || transaction_id || null;
+  const { Reference, Status, TransactionID, userId, subscriptionId } = req.body;
 
   try {
     await updatePayment(Reference, {
-      transactionId: realTransactionId,
+      transactionId: TransactionID,
       status: Status,
       metadata: req.body,
     });
 
-    // 2️⃣ Si succès, étend l'abonnement
     if (Status === "success") {
       await extendUserSubscription(userId, subscriptionId);
     }
