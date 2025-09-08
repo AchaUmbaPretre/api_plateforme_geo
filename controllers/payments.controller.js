@@ -49,7 +49,7 @@ const initiatePayment = async (req, res) => {
     });
 
     // 2️⃣ Prépare URL de redirection
-    const BACKEND_URL = process.env.BASE_URL_BACKEND || "http://localhost:5000";
+    const BACKEND_URL = process.env.BASE_URL_BACKEND || "https://api.geoconsult-rdc.com";
     const FRONTEND_URL =
       process.env.DOMAIN_FRONTEND || "http://localhost:3000";
 
